@@ -6,4 +6,4 @@ Download Visual Studio Code at https://code.visualstudio.com/
 
 # Installation
 
-coming soon...
+A setup script `setup.sh` is provided for adding vs.language.fortran to Visual Studio Code on Mac OS X. To do so run `setup.sh` from this repositories base directory.
