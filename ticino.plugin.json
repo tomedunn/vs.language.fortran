@@ -1,0 +1,18 @@
+{
+	"pluginId": "vs.language.fortran",
+	"activationEvents": ["textModel:fortran"],
+	"mainModule": "./fortranMain",
+	"contributes": {
+		"language": [{
+			"id": "fortran",
+			"extensions": [ ".f90", ".F90", ".f95", ".F95", ".f03", ".F03", ".f08", ".F08" ],
+			"aliases": [ "Fortran", "fortran" ]
+		}]
+	},
+	"scripts": {
+		"compile": "node ../../node_modules/gulp/bin/gulp.js --gulpfile ../gulpfile.js compile --dir vs.language.fortran"
+	},
+	"_bundling": [
+		{ "name": "./fortranMain" }
+	]
+}
