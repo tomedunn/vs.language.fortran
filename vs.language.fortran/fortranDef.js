@@ -1,5 +1,5 @@
 /*---------------------------------------------------------
- * Copyright (C) Microsoft Corporation. All rights reserved.
+ * Fortran language rules
  *--------------------------------------------------------*/
 /// <reference path="../declares.d.ts" />
 'use strict';
@@ -11,11 +11,11 @@ define(["require", "exports"], function (require, exports) {
         defaultToken: '',
         ignoreCase: true,
         lineComment: '!',
-        autoClosingPairs: [['{', '}'], ['[', ']'], ['(', ')'], ['"', '"']],
-        brackets: [
-            { open: '{', close: '}', token: 'delimiter.curly' },
-            { open: '[', close: ']', token: 'delimiter.square' },
-            { open: '(', close: ')', token: 'delimiter.parenthesis' },
+        autoClosingPairs: [
+            ['[', ']'], 
+            ['(', ')'], 
+            ['"', '"'],
+            ["'", "'"]
         ],
         keywords: [
             'abstract',
@@ -100,6 +100,7 @@ define(["require", "exports"], function (require, exports) {
             'logical',
             'module',
             'non_overridable',
+            'none',
             'nopass',
             'nullify',
             'only',
@@ -388,20 +389,27 @@ define(["require", "exports"], function (require, exports) {
             'random_seed',
             'system_clock'
         ],
-        // the default separators
-        wordDefinition: /(-?\d*\.\d\w*)|([^\`\~\!\@\#%\^\&\*\(\)\=\$\-\+\[\{\]\}\\\|\;\:\'\"\,\.\<\>\/\?\s]+)/g,
         // we include these common regular expressions
-        symbols: /[=><!~?&%|+\-*\/\^\.,\:]+/,
-        escapes: /\\(?:[abfnrtv\\"'$]|x[0-9A-Fa-f]{1,4}|u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8})/,
+        symbols: /\.[a-z]+\.|[=><!~?&%|+\-*\/\.,\:]+/,
         integersuffix: /(_[a-z]\w*)?/,
         floatsuffix: /(_[a-z]\w*)?/,
+        brackets: [
+            { open: '[', close: ']', token: 'delimiter.square' },
+            { open: '(/', close: '/)', token: 'delimiter.fortran_array' },
+            { open: '(', close: ')', token: 'delimiter.parenthesis' }
+        ],
+        constructs: [
+            { open: 'do', close: 'end do', token: 'keyword.tag-do' }
+        ],
         // The main tokenizer for our languages
         tokenizer: {
             root: [
                 { include: '@whitespace' },
+                { include: '@strings' },
+                { include: '@delimiters' },
                 [/!.*$/, 'comment'],
                 [/^\s*#\w+/, 'keyword'],
-                [/[{}()\[\]]/, '@brackets'],
+                [/\(\/|\/\)|[\(\)\[\]]/, '@brackets'],
                 [/\d+\.\d+([de][\-+]?\d+)?(@floatsuffix)/, 'number.float'],
                 [/\d+[de]([\-+]?\d+)?(@floatsuffix)/, 'number.float'],
                 [/\d+(@integersuffix)/, 'number'],
@@ -409,17 +417,7 @@ define(["require", "exports"], function (require, exports) {
                     '@operators': 'delimiter', 
                     '@default': ''
                 } }],
-                [/[;,]/, 'delimiter'],
-                [/"/, { cases: { 
-                    '@eos': 'string', 
-                    '@default': { token: 'string', next: '@string."' }
-                } }],
-                [/'/, { cases: { 
-                    '@eos': 'string', 
-                    '@default': { token: 'string', next: '@string.\'' } 
-                } }],
-                [/[a-zA-Z_]\w*/, { cases: {
-                    'this': 'variable.predefined', 
+                [/[a-z]\w*/, { cases: {
                     '@keywords': { token: 'keyword.$0' },
                     '@functions': { token: 'keyword.$0' },
                     '@subroutines': { token: 'keyword.$0' },
@@ -432,17 +430,28 @@ define(["require", "exports"], function (require, exports) {
             comment: [
                 [/!/, 'comment']
             ],
-            string: [
-                [/[^"'\#\\]+/, 'string'],
-                [/#{/, { cases: { 
-                    '$S2=="': { token: 'string', next: 'root.interpolatedstring' }, 
-                    '@default': 'string'
-                } }],
-                [/["']/, { cases: { 
-                    '$#==$S2': { token: 'string', next: '@pop' }, 
-                    '@default': 'string'
-                } }]
+            delimiters: [
+                [/[,;]+/, 'delimiter']
             ],
+            // Recognize strings, including those broken across lines with & (but not without)
+            strings: [
+                [/'$/, 'string.escape', '@popall'],
+                [/'/, 'string.escape', '@sglStringBody'],
+                [/"$/, 'string.escape', '@popall'],
+                [/"/, 'string.escape', '@dblStringBody']
+            ],
+            sglStringBody: [
+                [/'/, 'string.escape', '@popall'],
+                [/.(?=.*')/, 'string'],
+                [/.*&$/, 'string'],
+                [/.*$/, 'string', '@popall']
+            ],
+            dblStringBody: [
+                [/"/, 'string.escape', '@popall'],
+                [/.(?=.*")/, 'string'],
+                [/.*&$/, 'string'],
+                [/.*$/, 'string', '@popall']
+            ]
         },
     };
 });
